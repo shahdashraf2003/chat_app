@@ -17,7 +17,10 @@ class ChatCubit extends Cubit<ChatState> {
         'createdAt': DateTime.now(),
         'id': email,
       });
-    } on Exception {}
+    // ignore: empty_catches
+    } catch (e) {
+
+    }
   }
 
   void getMessage() {

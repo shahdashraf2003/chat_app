@@ -3,8 +3,8 @@
 import 'package:chat_app/constants.dart';
 import 'package:chat_app/helper/show_snack_bar.dart';
 import 'package:chat_app/pages/chat_page.dart';
+import 'package:chat_app/pages/cubits/auth_cubit/auth_cubit.dart';
 import 'package:chat_app/pages/cubits/chat_cubit/chat_cubit.dart';
-import 'package:chat_app/pages/cubits/login_cubit/login_cubit.dart';
 import 'package:chat_app/pages/register_page.dart';
 import 'package:chat_app/widget/custom_button.dart';
 import 'package:chat_app/widget/custom_text_field.dart';
@@ -26,7 +26,7 @@ class SignInPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<LoginCubit, LoginState>(
+    return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is LoginLoading) {
           isLoading = true;
@@ -104,7 +104,7 @@ class SignInPage extends StatelessWidget {
                         buttonText: 'LOGIN',
                         onPressed: () async {
                           if (formKey.currentState!.validate()) {
-                            BlocProvider.of<LoginCubit>(context)
+                            BlocProvider.of<AuthCubit>(context)
                                 .userLogin(email: email!, password: password!);
                           } else {}
                         }),

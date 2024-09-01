@@ -2,7 +2,7 @@
 
 import 'package:chat_app/constants.dart';
 import 'package:chat_app/helper/show_snack_bar.dart';
-import 'package:chat_app/pages/cubits/register_cubit/register_cubit.dart';
+import 'package:chat_app/pages/cubits/auth_cubit/auth_cubit.dart';
 import 'package:chat_app/pages/sign_in_page.dart';
 import 'package:chat_app/widget/custom_button.dart';
 import 'package:chat_app/widget/custom_text_field.dart';
@@ -22,7 +22,7 @@ class RegisterPage extends StatelessWidget {
   RegisterPage({super.key});
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<RegisterCubit, RegisterState>(
+    return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is RegisterSuccess) {
           isLoading = false;
@@ -98,7 +98,7 @@ class RegisterPage extends StatelessWidget {
                       buttonText: 'REGISTER',
                       onPressed: () async {
                         if (formKey.currentState!.validate()) {
-                          BlocProvider.of<RegisterCubit>(context).regiserUser(
+                          BlocProvider.of<AuthCubit>(context).regiserUser(
                                 email: email!, password: password!);             
                           
                         } else {}
