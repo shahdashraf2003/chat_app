@@ -3,6 +3,7 @@
 import 'package:chat_app/constants.dart';
 import 'package:chat_app/helper/show_snack_bar.dart';
 import 'package:chat_app/pages/chat_page.dart';
+import 'package:chat_app/pages/cubits/chat_cubit/chat_cubit.dart';
 import 'package:chat_app/pages/cubits/login_cubit/login_cubit.dart';
 import 'package:chat_app/pages/register_page.dart';
 import 'package:chat_app/widget/custom_button.dart';
@@ -31,6 +32,7 @@ class SignInPage extends StatelessWidget {
           isLoading = true;
         } else if (state is LoginSuccess) {
           isLoading = false;
+          BlocProvider.of<ChatCubit>(context).getMessage();
           showSnackBar(context, 'Login successfully.');
           Navigator.pushNamed(context, ChatPage.id, arguments: email);
         } else if (state is LoginFailure) {
@@ -102,8 +104,8 @@ class SignInPage extends StatelessWidget {
                         buttonText: 'LOGIN',
                         onPressed: () async {
                           if (formKey.currentState!.validate()) {
-                            BlocProvider.of<LoginCubit>(context).userLogin(
-                                email: email!, password: password!);
+                            BlocProvider.of<LoginCubit>(context)
+                                .userLogin(email: email!, password: password!);
                           } else {}
                         }),
                     const SizedBox(height: 25),
@@ -141,6 +143,4 @@ class SignInPage extends StatelessWidget {
       },
     );
   }
-
-  
 }

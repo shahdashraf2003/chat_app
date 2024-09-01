@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'dart:math';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:chat_app/models/message.dart';
+import 'package:chat_app/pages/cubits/chat_cubit/chat_cubit.dart';
 
 import 'package:chat_app/constants.dart';
-import 'package:chat_app/models/message.dart';
 import 'package:chat_app/widget/chat_bublle.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 
@@ -18,7 +20,7 @@ class ChatPage extends StatelessWidget {
   static String id = 'ChatPage';
   CollectionReference messages =
       FirebaseFirestore.instance.collection(kMessagesCollections);
-
+  List<Message> messagesList = [];
   TextEditingController controller = TextEditingController();
 
   final ScrollController _controller = ScrollController();
@@ -28,23 +30,62 @@ class ChatPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String email = ModalRoute.of(context)!.settings.arguments as String;
-    return StreamBuilder<QuerySnapshot>(
-        stream: messages.orderBy('createdAt', descending: true).snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            List<Message> messagesList = [];
-            for (int i = 0; i < snapshot.data!.docs.length; i++) {
-              messagesList.add(Message.fromJson(snapshot.data!.docs[i].data()));
-            }
-            var textField = TextField(
+
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: kPrimaryColor,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                kImage,
+                width: 50,
+                height: 50,
+              ),
+              const Text(
+                'Chat',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontFamily: 'pacifico',
+                    color: Color.fromARGB(255, 253, 252, 253)),
+              ),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: BlocBuilder<ChatCubit, ChatState>(
+                builder: (context, state) {
+                  var messagesList =
+                      BlocProvider.of<ChatCubit>(context).messagesList;
+
+                  return ListView.builder(
+                    reverse: true,
+                    controller: _controller,
+                    itemCount: messagesList.length,
+                    itemBuilder: (context, index) {
+                      return messagesList[index].id == email
+                          ? ChatBubble(
+                              text: messagesList[index],
+                            )
+                          : ChatBubbleForFriend(text: messagesList[index]);
+                    },
+                  );
+                },
+              ),
+            ),
+            TextField(
               controller: controller,
               onSubmitted: (data) {
                 if (data.isNotEmpty) {
-                  messages.add({
-                    'messages': data,
-                    'createdAt': DateTime.now(),
-                    'id': email,
-                  });
+                  BlocProvider.of<ChatCubit>(context).sendMessage(
+                    data: data,
+                    email: email,
+                  );
                   controller.clear();
                   _scrollDown();
                 }
@@ -61,7 +102,6 @@ class ChatPage extends StatelessWidget {
 
                     if (imgPicked != null) {
                       imgFile = File(imgPicked.path);
-                      // upload image to firebase storage
 
                       var nameImage = basename(imgFile!.path);
                       var random = Random().nextInt(100000);
@@ -72,13 +112,11 @@ class ChatPage extends StatelessWidget {
 
                       final downloadUrl = await imageRef.getDownloadURL();
 
-                      // ***********************************//
-                      messages.add({
-                        'messages': downloadUrl,
-                        'createdAt': DateTime.now(),
-                        'id': email,
-                      });
-
+                      // ignore: use_build_context_synchronously
+                      BlocProvider.of<ChatCubit>(context).sendMessage(
+                        email: email,
+                        data: downloadUrl,
+                      );
                       controller.clear();
                       _scrollDown();
                     }
@@ -92,11 +130,10 @@ class ChatPage extends StatelessWidget {
                   onPressed: () {
                     var data = controller.text;
                     if (data.isNotEmpty) {
-                      messages.add({
-                        'messages': data,
-                        'createdAt': DateTime.now(),
-                        'id': email,
-                      });
+                      BlocProvider.of<ChatCubit>(context).sendMessage(
+                        data: data,
+                        email: email,
+                      );
                       controller.clear();
                       _scrollDown();
                     }
@@ -108,62 +145,11 @@ class ChatPage extends StatelessWidget {
                 suffixIconColor: kPrimaryColor,
                 border: const OutlineInputBorder(),
               ),
-            );
-            return PopScope(
-              canPop: true,
-              child: Scaffold(
-                appBar: AppBar(
-                  automaticallyImplyLeading: false,
-                  backgroundColor: kPrimaryColor,
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        kImage,
-                        width: 50,
-                        height: 50,
-                      ),
-                      const Text(
-                        'Chat',
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontFamily: 'pacifico',
-                            color: Color.fromARGB(255, 253, 252, 253)),
-                      ),
-                    ],
-                  ),
-                ),
-                body: Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        reverse: true,
-                        controller: _controller,
-                        itemCount: messagesList.length,
-                        itemBuilder: (context, index) {
-                          return messagesList[index].id == email
-                              ? ChatBubble(
-                                  text: messagesList[index],
-                                )
-                              : ChatBubbleForFriend(text: messagesList[index]);
-                        },
-                      ),
-                    ),
-                    textField,
-                  ],
-                ),
-              ),
-            );
-          } else {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(
-                  color: kPrimaryColor,
-                ),
-              ),
-            );
-          }
-        });
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _scrollDown() {
