@@ -1,6 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:chat_app/constants.dart';
+import 'package:chat_app/core/cache_helper.dart';
+import 'package:chat_app/core/service_locator.dart';
 import 'package:chat_app/helper/show_snack_bar.dart';
 import 'package:chat_app/pages/chat_page.dart';
 import 'package:chat_app/pages/cubits/auth_cubit/auth_cubit.dart';
@@ -13,19 +15,31 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 // ignore: must_be_immutable
-class SignInPage extends StatelessWidget {
-  GlobalKey<FormState> formKey = GlobalKey<FormState>();
+class SignInPage extends StatefulWidget {
   static String id = 'SignInPage';
 
-  String? email;
-  String? password;
-
-  bool isLoading = false;
-
-  SignInPage({super.key});
+  const SignInPage({super.key});
 
   @override
+  State<SignInPage> createState() => _SignInPageState();
+}
+
+class _SignInPageState extends State<SignInPage> {
+  GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  String? email;
+
+  String? password;
+  bool isLoading = false;
+  @override
   Widget build(BuildContext context) {
+    email = getIt<CacheHelper>().getData(key: 'email');
+    password = getIt<CacheHelper>().getData(key: 'password');
+    if (email != null && password != null) {
+      BlocProvider.of<AuthCubit>(context)
+          .userLogin(email: email!, password: password!);
+      setState(() {});
+    }
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is LoginLoading) {
@@ -106,6 +120,11 @@ class SignInPage extends StatelessWidget {
                           if (formKey.currentState!.validate()) {
                             BlocProvider.of<AuthCubit>(context)
                                 .userLogin(email: email!, password: password!);
+
+                            getIt<CacheHelper>()
+                                .saveData(key: 'email', value: email);
+                            getIt<CacheHelper>()
+                                .saveData(key: 'password', value: password);
                           } else {}
                         }),
                     const SizedBox(height: 25),

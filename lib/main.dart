@@ -1,3 +1,5 @@
+import 'package:chat_app/core/cache_helper.dart';
+import 'package:chat_app/core/service_locator.dart';
 import 'package:chat_app/firebase_options.dart';
 import 'package:chat_app/pages/chat_page.dart';
 import 'package:chat_app/pages/cubits/auth_cubit/auth_cubit.dart';
@@ -10,6 +12,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  setUpServiceLocator();
+  await getIt<CacheHelper>().init();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -32,7 +36,7 @@ class ChatAPP extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         routes: {
-          SignInPage.id: (context) => SignInPage(),
+          SignInPage.id: (context) => const SignInPage(),
           RegisterPage.id: (context) => RegisterPage(),
           ChatPage.id: (context) => ChatPage(),
         },
